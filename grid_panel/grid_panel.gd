@@ -33,6 +33,7 @@ func _on_mouse_entered():
 
 # 揭示格子
 func reveal():
+	if revealed: return
 	revealed = true
 	if contain_godot:
 		var color := sprite_2d.self_modulate

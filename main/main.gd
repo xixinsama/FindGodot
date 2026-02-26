@@ -1,7 +1,11 @@
 extends Control
 class_name Main
 
-@export_range(4, 13, 1, "or_greater") var N = 60                      # 当前网格大小/小猫数量
+@export_range(4, 13, 1, "or_greater") var N = 4                      # 当前网格大小/小猫数量
+@export var ratate_mode: bool = false
+@export var nonograms_mode: bool = false
+@export var no_fill_mode: bool = false
+
 @export var color1: Color = Color("7e2553")
 @export var color2: Color = Color("ffec27")
 @export var color3: Color = Color("29adff")
@@ -9,6 +13,9 @@ class_name Main
 
 
 @onready var 重开: Button = $UI/重开
+@onready var rich_text_label: RichTextLabel = $UI/RichTextLabel
+@onready var 新游戏: Button = $UI/新游戏
+@onready var 返回: Button = $UI/返回
 
 @onready var up_label: Label = $VBoxContainer/HBoxContainer/Label
 @onready var col_hints: HBoxContainer = $VBoxContainer/HBoxContainer/列信息
@@ -25,22 +32,34 @@ class_name Main
 
 const CELLSIZE: Vector2i = Vector2i(72, 72)
 var cells := []                  # 二维数组，存储每个格子的Panel节点
-var game_state: int = 0 # 游戏中
+var game_state: int = 1 # 游戏中:0
 var health: int = 3:
 	set(v):
 		health = v
 		if health == 0 and game_state == 0:
 			print("Lose")
 			game_state = 1
-			reveal_godot(godots)
+			reveal_godot(grid_data.size())
+			await get_tree().create_timer(1.5).timeout
+			rich_text_label.show()
+			rich_text_label.text = "[b][wave][color=Black]LOSE~"
+			新游戏.show()
+			返回.show()
+			
 var godots: int:
 	set(v):
 		godots = v
 		if godots == 0 and game_state == 0:
 			print("Win")
+			game_state = 1
+			rich_text_label.show()
+			rich_text_label.text = "[b][wave][rainbow]YOU WIN!!!"
+			新游戏.show()
+			返回.show()
 
 func _ready() -> void:
 	重开.pressed.connect(_on_new_game)
+	新游戏.pressed.connect(_on_new_game)
 	new_game()
 
 # 全局变量（假设已在外部定义）
@@ -59,12 +78,15 @@ func new_game():
 	game_state = 0
 	health = 3
 	godots = N
+	rich_text_label.hide()
+	新游戏.hide()
+	返回.hide()
 	
 	#print_matrix(_can_place)
 	
 	#print_matrix(grid_color)
-	
-	#fill_remaining()
+	if not no_fill_mode:
+		fill_remaining()
 	#print_matrix(grid_color)
 	
 	grid_color_4c = four_color_regions(grid_color)
@@ -75,10 +97,10 @@ func new_game():
 	
 	update_hints()
 	
-	reveal_godot(ceili(float(N) / 5))
+	reveal_godot(ceili(float(N) / 4))
 	
 	## 更新UI
-	var hint_size: float = 2 * N * 4
+	var hint_size: float = (2 * N + 1) * 4
 	up_label.custom_minimum_size = Vector2(hint_size, hint_size)
 	up_label.text = "N = " + str(N)
 	dowm_label.custom_minimum_size = Vector2(hint_size, hint_size)
@@ -88,7 +110,9 @@ func new_game():
 	camera_2d.zoom = Vector2(zoom_scale, zoom_scale)
 
 func _on_new_game():
-	new_game()
+	if game_state == 1:
+		new_game()
+		N = randi_range(4, 13)
 
 ## 生成关卡数据
 #region 第一步
@@ -106,7 +130,10 @@ func generate_level(n: int) -> bool:
 			_can_place[r].append(0)
 	
 	# 逐行放置 godot
-	for row in range(n):
+	var index := center_to_ends(n)
+	var sp: int = 0
+	for row in index:
+
 		# 计算当前行可用的列数
 		var available_cols = 0
 		var can_place_row = _can_place[row]  # 局部引用，加速访问
@@ -127,10 +154,13 @@ func generate_level(n: int) -> bool:
 		var godot_pos = Vector2i(row, col)
 		grid_color[row][col] = row
 		# 标记互斥区域
-		mark_mutex_rc_plus_8(row, col, _can_place, n)
-		
+		if not ratate_mode:
+			mark_mutex_rc_plus_8(row, col, _can_place, n)
+		else:
+			mark_mutex_diag_plus_8(row, col, _can_place, n)
 		# 蔓延颜色
-		var target_count = randi_range(0, 2*n)
+		sp += 1
+		var target_count = randi_range(0, sp)
 		spread_color(row, col, row, target_count, _can_place, n)
 		
 		# 记录 godot 位置
@@ -470,7 +500,10 @@ func create_grid():
 			
 			var panel2: GridPanel = grid_panel.instantiate()
 			grid_container_2.add_child(panel2)
-			panel2.set_sprite(7, get_color_for_index(grid_color_4c[r][c]))
+			if nonograms_mode:
+				panel2.set_sprite(7, Color("214c55ff"))
+			else:
+				panel2.set_sprite(7, get_color_for_index(grid_color_4c[r][c]))
 			panel2.grid_pos = Vector2i(r, c)
 			if panel2.grid_pos in grid_data:
 				panel2.contain_godot = true
@@ -500,7 +533,7 @@ func update_hints():
 		row_hints_2.add_child(hbox_2)
 		var color_rect_b = ColorRect.new()
 		color_rect_b.custom_minimum_size = Vector2(4, 72)
-		color_rect_b.color = Color(0.0, 0.0, 0.0, 1.0)
+		color_rect_b.color = Color(0.0, 0.0, 0.0, 0.0)
 		var color_rect_b_2 = color_rect_b.duplicate()
 		hbox_2.add_child(color_rect_b_2)
 		for c in range(N):
@@ -527,7 +560,7 @@ func update_hints():
 		# 空白填充
 		var color_rect_b = ColorRect.new()
 		color_rect_b.custom_minimum_size = Vector2(72, 4)
-		color_rect_b.color = Color(0.0, 0.0, 0.0, 1.0)
+		color_rect_b.color = Color(0.0, 0.0, 0.0, 0.0)
 		var color_rect_b_2 = color_rect_b.duplicate()
 		vbox_2.add_child(color_rect_b_2)
 		for r in range(N):
@@ -574,8 +607,26 @@ func print_matrix(array: Array) -> void:
 func reveal_godot(n: int) -> void:
 	if n > N: return
 	var gd: Array = grid_data.duplicate()
+	gd.shuffle()
 	for i in range(n):
-		var reveal_one: int = randi() % (N - i)
-		var pos = gd.pop_at(reveal_one)
+		var pos = gd[i]
 		var p = cells[pos.x][pos.y] as GridPanel
 		p.reveal()
+
+func center_to_ends(n: int) -> Array:
+##返回一个数组，包含从中间到两端的索引顺序（先左后右）"""
+	var result = []
+	if n <= 0:
+		return result
+	var mid := int(float(n - 1) / 2)      # 左中索引（整数除法）
+	result.append(mid)
+	var left = mid
+	var right = mid
+	while left > 0 or right < n - 1:
+		if left > 0:
+			left -= 1
+			result.append(left)
+		if right < n - 1:
+			right += 1
+			result.append(right)
+	return result
