@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://ujxh5hu8qmh0"]
+
+[ext_resource type="Script" uid="uid://derq2ym7lgs57" path="res://main/main.gd" id="1_yh5la"]
+
+[node name="Main" type="Control" unique_id=769732970 groups=["main"]]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_yh5la")
+N = 99
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1097634327]
+
+[node name="重开" type="Button" parent="UI" unique_id=1715947055]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -114.0
+offset_top = 22.0
+offset_right = -23.0
+offset_bottom = 95.0
+grow_horizontal = 0
+text = "重开"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1790852278]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -182.0
+offset_top = -76.0
+offset_right = 182.0
+offset_bottom = 76.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=230031542]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer" unique_id=1941148430]
+layout_mode = 2
+
+[node name="列信息" type="HBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=576079868]
+custom_minimum_size = Vector2(288, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer" unique_id=701438844]
+layout_mode = 2
+
+[node name="行信息" type="VBoxContainer" parent="VBoxContainer/HBoxContainer2" unique_id=1705308693]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer/HBoxContainer2" unique_id=1625931241]
+visible = false
+layout_mode = 2
+
+[node name="GridContainer2" type="GridContainer" parent="VBoxContainer/HBoxContainer2" unique_id=897033477]
+layout_mode = 2
+
+[node name="行信息2" type="VBoxContainer" parent="VBoxContainer/HBoxContainer2" unique_id=272430598]
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer" unique_id=631538171]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer3" unique_id=1550512171]
+layout_mode = 2
+
+[node name="列信息2" type="HBoxContainer" parent="VBoxContainer/HBoxContainer3" unique_id=2132331013]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=473786745]
+position = Vector2(640, 360)

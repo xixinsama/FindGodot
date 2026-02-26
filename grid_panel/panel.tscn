@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://blsifrifwor13"]
+
+[ext_resource type="Texture2D" uid="uid://djnepwnywd6ye" path="res://diff_godot_icon.png" id="1_4wfxa"]
+[ext_resource type="Script" uid="uid://dgcqqorosu8d7" path="res://grid_panel/grid_panel.gd" id="1_xna5g"]
+
+[node name="Panel" type="Panel" unique_id=847147674]
+custom_minimum_size = Vector2(72, 72)
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_xna5g")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=700654535]
+position = Vector2(36, 36)
+texture = ExtResource("1_4wfxa")
+hframes = 3
+vframes = 3
+frame = 8
