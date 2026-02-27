@@ -153,10 +153,11 @@ func new_game():
 	
 	if nonograms_mode:
 		update_hints()
-	if ratate_mode:
-		reveal_godot(floori(float(N) / 3) - 1)
-	else:
+	
+	if ratate_mode: ## 该选项降低难度
 		reveal_godot(ceili(float(N) / 4))
+	else:
+		reveal_godot(ceili(float(N) / 4) + floori(float(N) / 6))
 		
 	## 更新UI
 	var hint_size: float = (2 * N + 1) * 4
