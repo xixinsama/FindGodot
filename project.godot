@@ -11,8 +11,18 @@ config_version=5
 [application]
 
 config/name="FindGodot"
+run/main_scene="uid://xtgif53rlnrj"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[audio]
+
+buses/default_bus_layout="uid://ciai5c3bdvlls"
+
+[autoload]
+
+BgmManager="*uid://cde0vb3n12smb"
+GameManager="*uid://us4tpmg6suhk"
 
 [display]
 
@@ -31,7 +41,12 @@ main="游戏核心"
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
+textures/canvas_textures/default_texture_filter=3
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/anisotropic_filtering_level=0
+viewport/hdr_2d=true
+textures/decals/filter=0
+textures/light_projectors/filter=0
+environment/defaults/default_clear_color=Color(0.078431375, 0.08627451, 0.09411765, 1)

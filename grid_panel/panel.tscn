@@ -3,6 +3,21 @@
 [ext_resource type="Texture2D" uid="uid://djnepwnywd6ye" path="res://diff_godot_icon.png" id="1_4wfxa"]
 [ext_resource type="Script" uid="uid://dgcqqorosu8d7" path="res://grid_panel/grid_panel.gd" id="1_xna5g"]
 
+[sub_resource type="Gradient" id="Gradient_xna5g"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0.77788156, 0.77788156, 0.7778816, 0.6666667)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4m7nl"]
+noise_type = 4
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_c8xmo"]
+width = 72
+height = 72
+noise = SubResource("FastNoiseLite_4m7nl")
+color_ramp = SubResource("Gradient_xna5g")
+seamless = true
+
 [node name="Panel" type="Panel" unique_id=847147674]
 custom_minimum_size = Vector2(72, 72)
 offset_right = 40.0
@@ -15,3 +30,10 @@ texture = ExtResource("1_4wfxa")
 hframes = 3
 vframes = 3
 frame = 8
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=941645939]
+position = Vector2(36, 36)
+energy = 1.2
+blend_mode = 2
+texture = SubResource("NoiseTexture2D_c8xmo")
+height = 100.0

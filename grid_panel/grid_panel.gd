@@ -7,6 +7,10 @@ var grid_pos: Vector2i = Vector2i(-1, -1)
 var contain_godot: bool = false
 var revealed: bool = false
 var marked: bool = false      # 新增：标注状态
+var f: int = 0:
+	set(v):
+		f = v
+		sprite_2d.frame = f
 
 func _ready():
 	# 连接鼠标进入信号，用于拖拽标注
@@ -14,7 +18,7 @@ func _ready():
 
 func set_sprite(frame: int, fmodulate: Color = Color.WHITE):
 	if frame >= 0 and frame <= 8:
-		sprite_2d.frame = frame
+		f = frame
 		sprite_2d.self_modulate = fmodulate
 
 func _gui_input(event):

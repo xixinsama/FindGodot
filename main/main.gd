@@ -32,34 +32,90 @@ class_name Main
 
 const CELLSIZE: Vector2i = Vector2i(72, 72)
 var cells := []                  # 二维数组，存储每个格子的Panel节点
-var game_state: int = 1 # 游戏中:0
+var game_state: int = 1 # 游戏中:0，准备中:1
+
+@onready var animated_sprite_2d: AnimatedSprite2D = $UI/AnimatedSprite2D
+@onready var animated_sprite_2d_2: AnimatedSprite2D = $UI/AnimatedSprite2D2
+@onready var animated_sprite_2d_3: AnimatedSprite2D = $UI/AnimatedSprite2D3
 var health: int = 3:
 	set(v):
 		health = v
+		show_health(health)
 		if health == 0 and game_state == 0:
 			print("Lose")
+			stop_timer()
 			game_state = 1
 			reveal_godot(grid_data.size())
-			await get_tree().create_timer(1.5).timeout
 			rich_text_label.show()
-			rich_text_label.text = "[b][wave][color=Black]LOSE~"
+			rich_text_label.text = "[b][wave]LOSE~"
 			新游戏.show()
 			返回.show()
-			
+
+func show_health(hp: int = 0):
+	animated_sprite_2d.hide()
+	animated_sprite_2d_2.hide()
+	animated_sprite_2d_3.hide()
+	if hp >= 3:
+		animated_sprite_2d.show()
+		animated_sprite_2d_2.show()
+		animated_sprite_2d_3.show()
+	elif hp == 2:
+		animated_sprite_2d.show()
+		animated_sprite_2d_2.show()
+	elif hp == 1:
+		animated_sprite_2d.show()
+	else:
+		return
+	
 var godots: int:
 	set(v):
 		godots = v
 		if godots == 0 and game_state == 0:
 			print("Win")
+			stop_timer()
 			game_state = 1
 			rich_text_label.show()
 			rich_text_label.text = "[b][wave][rainbow]YOU WIN!!!"
 			新游戏.show()
 			返回.show()
 
+# 计时变量
+var elapsed_time: float = 0.0
+var is_timing: bool = false
+func _process(delta: float) -> void:
+	if is_timing:
+		elapsed_time += delta
+		update_timer_display()
+
+# 更新显示（格式化为 分钟:秒.毫秒）
+func update_timer_display():
+	var minutes = int(elapsed_time / 60)
+	var seconds = int(elapsed_time) % 60
+	up_label.text = "N = " + str(N) + "\n" \
+		+ "%02d:%02d" % [minutes, seconds]
+
+# 开始计时
+func start_timer():
+	elapsed_time = 0.0
+	is_timing = true
+
+# 停止计时并返回最终时间
+func stop_timer() -> float:
+	is_timing = false
+	return elapsed_time
+
+func _on_return():
+	get_tree().change_scene_to_file("res://strat_scene/start.tscn")
+
 func _ready() -> void:
 	重开.pressed.connect(_on_new_game)
 	新游戏.pressed.connect(_on_new_game)
+	返回.pressed.connect(_on_return)
+	
+	ratate_mode = GameManager.ratate_mode
+	nonograms_mode = GameManager.nonograms_mode
+	no_fill_mode = GameManager.no_fill_mode
+
 	new_game()
 
 # 全局变量（假设已在外部定义）
@@ -95,24 +151,29 @@ func new_game():
 	
 	create_grid()
 	
-	update_hints()
-	
-	reveal_godot(ceili(float(N) / 4))
-	
+	if nonograms_mode:
+		update_hints()
+	if ratate_mode:
+		reveal_godot(floori(float(N) / 3) - 1)
+	else:
+		reveal_godot(ceili(float(N) / 4))
+		
 	## 更新UI
 	var hint_size: float = (2 * N + 1) * 4
 	up_label.custom_minimum_size = Vector2(hint_size, hint_size)
-	up_label.text = "N = " + str(N)
 	dowm_label.custom_minimum_size = Vector2(hint_size, hint_size)
 	
 	var v_total_size: float = 2 * hint_size + (N+3) * 76
 	var zoom_scale := 720 / v_total_size
 	camera_2d.zoom = Vector2(zoom_scale, zoom_scale)
+	
+	start_timer()
 
 func _on_new_game():
 	if game_state == 1:
+		N = randi_range(5, 13)
 		new_game()
-		N = randi_range(4, 13)
+		
 
 ## 生成关卡数据
 #region 第一步
@@ -157,7 +218,8 @@ func generate_level(n: int) -> bool:
 		if not ratate_mode:
 			mark_mutex_rc_plus_8(row, col, _can_place, n)
 		else:
-			mark_mutex_diag_plus_8(row, col, _can_place, n)
+			mark_mutex_full_rowcol_plus_diag(row, col, _can_place, n)
+			#mark_mutex_diag_plus_8(row, col, _can_place, n)
 		# 蔓延颜色
 		sp += 1
 		var target_count = randi_range(0, sp)
@@ -501,7 +563,8 @@ func create_grid():
 			var panel2: GridPanel = grid_panel.instantiate()
 			grid_container_2.add_child(panel2)
 			if nonograms_mode:
-				panel2.set_sprite(7, Color("214c55ff"))
+				panel2.set_sprite(7, Color("418392ff"))
+				#panel2.set_sprite(7, get_color_for_index(grid_color_4c[r][c]))
 			else:
 				panel2.set_sprite(7, get_color_for_index(grid_color_4c[r][c]))
 			panel2.grid_pos = Vector2i(r, c)
@@ -511,6 +574,7 @@ func create_grid():
 			row_cells.append(panel2)
 		cells.append(row_cells)
 
+## 遇到间隔要插入白色条块
 func update_hints():
 	# 清除旧提示
 	for child in row_hints.get_children():
@@ -536,18 +600,20 @@ func update_hints():
 		color_rect_b.color = Color(0.0, 0.0, 0.0, 0.0)
 		var color_rect_b_2 = color_rect_b.duplicate()
 		hbox_2.add_child(color_rect_b_2)
-		for c in range(N):
-			var color = grid_color_4c[r][c]
-			if color == 0 or color == 1:
-				var color_rect = ColorRect.new()
-				color_rect.custom_minimum_size = Vector2(4, 72)
-				color_rect.color = get_color_for_index(color)
-				hbox.add_child(color_rect)
-			if color == 2 or color == 3:
-				var color_rect = ColorRect.new()
-				color_rect.custom_minimum_size = Vector2(4, 72)
-				color_rect.color = get_color_for_index(color)
-				hbox_2.add_child(color_rect)
+		
+		var h1c: Array = process_array(grid_color_4c[r], 0, 1)
+		var h2c: Array = process_array(grid_color_4c[r], 2, 3)
+		for i in range(h1c.size()):
+			var color_rect = ColorRect.new()
+			color_rect.custom_minimum_size = Vector2(4, 72)
+			color_rect.color = get_color_for_index(h1c[i])
+			hbox.add_child(color_rect)
+		for i in range(h2c.size()):
+			var color_rect = ColorRect.new()
+			color_rect.custom_minimum_size = Vector2(4, 72)
+			color_rect.color = get_color_for_index(h2c[i])
+			hbox_2.add_child(color_rect)
+
 		hbox.add_child(color_rect_b)
 	# 列提示：每列从上到下显示该列每个格子的颜色
 	for c in range(N):
@@ -563,23 +629,69 @@ func update_hints():
 		color_rect_b.color = Color(0.0, 0.0, 0.0, 0.0)
 		var color_rect_b_2 = color_rect_b.duplicate()
 		vbox_2.add_child(color_rect_b_2)
+		
+		# 额外处理这一列的信息
+		var c_color_data: Array = []
 		for r in range(N):
-			var color = grid_color_4c[r][c]
-			if color == 0 or color == 1:
-				var color_rect = ColorRect.new()
-				color_rect.custom_minimum_size = Vector2(72, 4)
-				color_rect.color = get_color_for_index(color)
-				vbox.add_child(color_rect)
-			if color == 2 or color == 3:
-				var color_rect = ColorRect.new()
-				color_rect.custom_minimum_size = Vector2(72, 4)
-				color_rect.color = get_color_for_index(color)
-				vbox_2.add_child(color_rect)
+			c_color_data.append(grid_color_4c[r][c])
+		var v1c: Array = process_array(c_color_data, 0, 1)
+		var v2c: Array = process_array(c_color_data, 2, 3)
+		for i in range(v1c.size()):
+			var color_rect = ColorRect.new()
+			color_rect.custom_minimum_size = Vector2(72, 4)
+			color_rect.color = get_color_for_index(v1c[i])
+			vbox.add_child(color_rect)
+		for i in range(v2c.size()):
+			var color_rect = ColorRect.new()
+			color_rect.custom_minimum_size = Vector2(72, 4)
+			color_rect.color = get_color_for_index(v2c[i])
+			vbox_2.add_child(color_rect)
 		
 		vbox.add_child(color_rect_b)
 
+## 辅助函数
+func process_array(arr: Array, valid_0: int, valid_1: int, mark_sign: int = -1) -> Array:
+	var result: Array = []          # 存储处理后的元素
+	var i: int = 0                  # 当前遍历索引
+	var last_valid = null            # 上一个有效元素的值（valid_0 或 valid_1），null 表示还没有
+	
+	while i < arr.size():
+		var current = arr[i]
+		
+		# 判断当前元素是否为有效元素
+		if current == valid_0 or current == valid_1:
+			# 有效元素直接加入结果，并更新上一个有效值
+			result.append(current)
+			last_valid = current
+			i += 1
+		else:
+			# 当前元素无效，找到连续无效段的结束位置
+			var start = i
+			while i < arr.size() and (arr[i] != valid_0 and arr[i] != valid_1):
+				i += 1
+			# 此时 i 指向连续无效段后的第一个有效元素或数组末尾
+			
+			# 获取右边第一个有效元素（如果有）
+			var right_valid = null
+			if i < arr.size():
+				right_valid = arr[i]   # 一定是有效元素
+			
+			# 根据左右有效元素的情况决定如何处理这段无效元素
+			if last_valid != null and right_valid != null:
+				if last_valid == right_valid:
+					# 两边相同有效元素 → 替换为一个特殊标记
+					result.append(mark_sign)
+				# 两边不同有效元素 → 删除，不加任何东西
+			# 其他情况（只有一边有效或两边都无效）→ 删除，不加任何东西
+			
+			# 注意：last_valid 保持不变，因为标记不是有效元素
+	return result
+
+
 func get_color_for_index(i: int) -> Color:
 	match i % 4:
+		-1:
+			return Color(1.0, 1.0, 1.0, 1.0)
 		0:
 			return color1
 		1:

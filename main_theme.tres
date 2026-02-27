@@ -43,7 +43,10 @@ shadow_size = 4
 shadow_offset = Vector2(2, 2)
 
 [resource]
+Button/constants/outline_size = 2
 Button/font_sizes/font_size = 24
 Button/styles/hover = SubResource("StyleBoxFlat_a2l2q")
 Button/styles/normal = SubResource("StyleBoxFlat_gsqoc")
 Button/styles/pressed = SubResource("StyleBoxFlat_470mv")
+CheckButton/colors/font_outline_color = Color(0, 0, 0, 1)
+CheckButton/constants/outline_size = 2
